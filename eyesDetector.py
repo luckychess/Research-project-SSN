@@ -7,8 +7,8 @@ class Detector(object):
         self.img = img
 
     def detectEyes(self):
-        face_cascade = cv2.CascadeClassifier('/usr/share/OpenCV/haarcascades/haarcascade_frontalface_default.xml')
-        eye_cascade = cv2.CascadeClassifier('/usr/share/OpenCV/haarcascades/haarcascade_eye.xml')
+        face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+        eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
     
         self.gray = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(self.gray, 1.3, 5)
