@@ -182,15 +182,15 @@ if __name__ == "__main__":
     pupilsDetectorLight.detectEyes()
     pupilsDetectorLight.detectPupils()
 
-    darkToLightRadius1 = pupilsDetectorDark.radiuses[0] / pupilsDetectorLight.radiuses[0]
-    darkToLightRadius2 = pupilsDetectorDark.radiuses[1] / pupilsDetectorLight.radiuses[1]
+    darkRadius = .5*(pupilsDetectorDark.radiuses[0] + pupilsDetectorDark.radiuses[1])
+    lightRadius = .5*(pupilsDetectorLight.radiuses[0] + pupilsDetectorLight.radiuses[1])
 
-    print("First eye ratio: " + str(darkToLightRadius1))
-    print("Second eye ratio: " + str(darkToLightRadius2))
+    print("Dark pupil average radius: " + str(darkRadius))
+    print("Light pupil average radius: " + str(lightRadius))
 
-    averageRatio = (darkToLightRadius1 + darkToLightRadius2) / 2
-    print("Both eyes average: " + str(averageRatio))
-    if averageRatio >= 1.05:
+    ratio = darkRadius / lightRadius
+    print("Ratio: " + str(ratio))
+    if ratio >= 1.05:
         print("These eyes looks good")
     else:
         print("It looks like these eyes's owner a drug addictor")
