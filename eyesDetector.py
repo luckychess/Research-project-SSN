@@ -49,6 +49,16 @@ def int_circle(circle):
     return ((x, y), r)
 #int_circle
 
+def absolute_border_test(circle, width, height):
+    """Test pupil placed at center of image"""
+    (cx,cy),r = circle
+    ts = cy - r
+    ls = cx - r
+    bs = cy + r
+    rs = cx + r
+    return ((ts > 0) and (ls > 0) and (bs < height) and (rs < width))
+#absolute_border_test
+
 def pupil_detect(grayscale):
     height, width = grayscale.shape[:2]
     img_area = width * height
@@ -64,8 +74,8 @@ def pupil_detect(grayscale):
             a2 = cv2.contourArea(contours[i])
             if convex_diff_test(a1, a2, 0.2) and absolute_area_test(a2, img_area) and circle_similarity_test(convexHull) and circle_area_test(convexHull):
                 circle = get_movement_circle(convexHull)
-                if absolute_position_test(circle, width, height):
-                    res = int_circle(circle),(cv2.contourArea(convexHull)/cv2.arcLength(convexHull,True))
+                if absolute_position_test(circle, width, height) and absolute_border_test(circle, width, height):
+                    res = int_circle(circle),(cv2.contourArea(convexHull)/(cv2.arcLength(convexHull,True)**2))
                 #^ if absolute_position_test(circle, width, height):
             #^ if convex_diff_test(a1, ...
         #^ for i in range(0, len(contours)):
@@ -97,7 +107,12 @@ def get_img_pupil(img):
             return res1[0]
         #
     else:
-        return pupil_detect(img_satr)[0]
+        res2 = pupil_detect(img_satr)
+        if res2 is not None:
+            return res2[0]
+        else:
+            return None
+        #
     #
 #get_img_pupil
 
@@ -123,7 +138,7 @@ class Detector(object):
             cv2.rectangle(self.img,(x,y),(x+w,y+h),(255,0,0),2)
             self.roi_gray = self.gray[y:y+h, x:x+w]
             self.roi_color = self.img[y:y+h, x:x+w]
-            self.eyes = eye_cascade.detectMultiScale(self.roi_gray)
+            self.eyes = eye_cascade.detectMultiScale(self.roi_gray, 1.3, 5)
     
     def detectPupils(self):
         print("Eyes found: " + str(len(self.eyes)))
@@ -134,9 +149,10 @@ class Detector(object):
             img_eye = self.roi_color[y:y+h, x:x+w]
             
             circle = get_img_pupil(img_eye)
-            self.radiuses.append(circle[1])
-            cv2.circle(img_eye, circle[0], circle[1], (255,0,0), 1)
-            self.showPicture(img_eye)
+            if circle is not None:
+                self.radiuses.append(circle[1])
+                cv2.circle(img_eye, circle[0], circle[1], (255,0,0), 1)
+                self.showPicture(img_eye)
     
     def showPicture(self, eye):
         cv2.imshow('Eyes', eye)
