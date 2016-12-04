@@ -121,6 +121,8 @@ class Detector(object):
     def __init__(self, img):
         self.img = img
         self.radiuses = []
+        self.sizes = []
+        self.coords = []
         self.threshold_level_low = 230
         self.threshold_level_high = 231
     
@@ -134,25 +136,33 @@ class Detector(object):
             print("Unable to find any faces on the picture")
             quit()
         
+        self.faces_pos = [] #pupil absolute coordinates
         for (x,y,w,h) in faces:
             cv2.rectangle(self.img,(x,y),(x+w,y+h),(255,0,0),2)
             self.roi_gray = self.gray[y:y+h, x:x+w]
             self.roi_color = self.img[y:y+h, x:x+w]
             self.eyes = eye_cascade.detectMultiScale(self.roi_gray, 1.3, 5)
+            for i in self.eyes:
+                self.faces_pos += [(x,y)]
     
     def detectPupils(self):
         print("Eyes found: " + str(len(self.eyes)))
         if len(self.eyes) == 0:
             print("Unable to find eyes")
             quit()
+        i = 0
         for (x,y,w,h) in self.eyes:
+            ox, oy = self.faces_pos[i]
             img_eye = self.roi_color[y:y+h, x:x+w]
             
             circle = get_img_pupil(img_eye)
             if circle is not None:
                 self.radiuses.append(circle[1])
+                self.coords += [(ox+x+circle[0][0], oy+y+circle[0][1])]
                 cv2.circle(img_eye, circle[0], circle[1], (255,0,0), 1)
                 self.showPicture(img_eye)
+            i += 1
+        self.sizes += [np.sqrt((self.coords[0][0] - self.coords[1][0])**2 + (self.coords[0][1] - self.coords[1][1])**2)]
     
     def showPicture(self, eye):
         cv2.imshow('Eyes', eye)
@@ -187,8 +197,10 @@ if __name__ == "__main__":
 
     print("Dark pupil average radius: " + str(darkRadius))
     print("Light pupil average radius: " + str(lightRadius))
+    images_disproportion = pupilsDetectorLight.sizes[0] / pupilsDetectorDark.sizes[0]
+    print("Scale disproportion light to dark: " + str(images_disproportion))
 
-    ratio = darkRadius / lightRadius
+    ratio = images_disproportion * (darkRadius / lightRadius)
     print("Ratio: " + str(ratio))
     if ratio >= 1.05:
         print("These eyes looks good")
